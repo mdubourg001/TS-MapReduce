@@ -73,15 +73,48 @@ const DATASET: Location[] = [
   { email: 'tito.doe@email.com', rating: 'G', title: 'ROCKY 1', amount: 2.9 },
 ];
 
-const mapRentsByClients = (dataset: Location[]) =>
+// const mapRentsByClients = (dataset: Location[]) =>
+//   dataset
+//     .map((rent: Location) => [rent.email, rent.amount])
+//     .reduce((acc, cur) => {
+//       const existIndex = acc.findIndex(r => r[0] === cur[0]);
+//       return existIndex === -1 ? [...acc, ] : []
+//     }, []);
+
+// console.log(mapRentsByClients(DATASET));
+
+
+const mapRentsByRating = (dataset: Location[]) =>
   dataset
-    .map((rent: Location) => [rent.email, rent.amount])
+    .map((rent: Location) => [rent.rating, [rent.amount]])
     .reduce((acc, cur) => {
-      const existIndex = acc.findIndex(r => r[0] === cur[0]);
-      return existIndex === -1 ? [...acc, ] 
+      const existIndex = acc.findIndex(a => a[0] === cur[0]);
+      if (existIndex >= 0){
+        acc[existIndex][1].push(...cur[1])
+      }
+      else{
+        acc.push(cur);
+      }
+      return acc;
     }, []);
 
-console.log(mapRentsByClients(DATASET));
+// console.log(mapRentsByRating(DATASET));
+
+const mapMoviesByClients = (dataset: Location[]) =>
+  dataset
+    .map((rent: Location) => [rent.rating, [rent.title]])
+    .reduce((acc, cur) => {
+      const existIndex = acc.findIndex(a => a[0] === cur[0]);
+      if (existIndex >= 0){
+        acc[existIndex][1].push(...cur[1])
+      }
+      else{
+        acc.push(cur);
+      }
+      return acc;
+    }, []);
+
+console.log(mapMoviesByClients(DATASET));
 
 /* // map, regroup and sort
 const mapNbOfVowelsByLengthOfWord = (wordArray: string[]) =>
