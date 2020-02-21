@@ -1,34 +1,8 @@
 // -----
-// utils
+// types
 // -----
 
-const log = (...args: any[]) => console.log(`=> ${args}`);
-
-const tapLog = (x: any) => {
-  log(x);
-  return x;
-};
-
-// -----
-// main
-// -----
-
-const splitDataset = (dataset: any[], nb: number) => {
-  const split = [];
-  const sliceSize: number = Math.floor(dataset.length / nb);
-
-  for (let i = 0; i < nb; i++) {
-    split.push(
-      dataset.slice(
-        i * sliceSize,
-        i === nb - 1 ? undefined : (i + 1) * sliceSize,
-      ),
-    );
-  }
-
-  return split;
-};
-
+/** Le type de données récupérées depuis le CSV */
 type Location = {
   email: string;
   rating: string;
@@ -36,7 +10,9 @@ type Location = {
   amount: number;
 };
 
-type MappedDataset = any[][];
+type Pair = any[2];
+
+type MappedDataset = Pair[];
 
 type MappedDatasetArray = MappedDataset[];
 
@@ -73,12 +49,30 @@ const DATASET: Location[] = [
   { email: 'tito.doe@email.com', rating: 'G', title: 'ROCKY 1', amount: 2.9 },
 ];
 
-const mapRentsAmountByClients = (
-  dataset: Location[],
-): {
-  email: string;
-  rentsAmounts: number[];
-}[] =>
+/** Découpe un dataset en `nb` datasets plus petits */
+const splitDataset = (dataset: any[], nb: number) => {
+  const split = [];
+  const sliceSize: number = Math.floor(dataset.length / nb);
+
+  for (let i = 0; i < nb; i++) {
+    split.push(
+      dataset.slice(
+        i * sliceSize,
+        i === nb - 1 ? undefined : (i + 1) * sliceSize,
+      ),
+    );
+  }
+
+  return split;
+};
+
+// -----
+// maps
+// N.B: Les maps sont notées 'async' afin de pouvoir être parallélisées à l'aide de 'Promise.all'
+// -----
+
+/** Retourne un tableau de 'Pair' <email, amount[]>   */
+const mapRentsAmountByClients = async (dataset: Location[]): MappedDataset =>
   dataset
     .map((rent: Location) => [rent.email, [rent.amount]])
     .reduce((acc, cur) => {
@@ -88,48 +82,110 @@ const mapRentsAmountByClients = (
       return acc;
     }, []);
 
-//console.log(splitDataset(DATASET, 2).map(mapRentsAmountByClients));
-
-const mapRentsByRating = (dataset: Location[]) =>
+/** Retourne un tableau de 'Pair' <email, amount[]>   */
+const mapRentsAmountByRating = async (dataset: Location[]): MappedDataset =>
   dataset
     .map((rent: Location) => [rent.rating, [rent.amount]])
     .reduce((acc, cur) => {
       const existIndex = acc.findIndex(a => a[0] === cur[0]);
-      if (existIndex >= 0) {
-        acc[existIndex][1].push(...cur[1]);
-      } else {
-        acc.push(cur);
-      }
+      if (existIndex === -1) return [...acc, cur];
+      acc[existIndex][1].push(...cur[1]);
       return acc;
     }, []);
 
-// console.log(mapRentsByRating(DATASET));
-
-const mapMoviesByClients = (dataset: Location[]) =>
+const mapMostRentedByRating = async (dataset: Location[]): MappedDataset =>
   dataset
     .map((rent: Location) => [rent.rating, [rent.title]])
     .reduce((acc, cur) => {
       const existIndex = acc.findIndex(a => a[0] === cur[0]);
-      if (existIndex >= 0) {
-        acc[existIndex][1].push(...cur[1]);
-      } else {
-        acc.push(cur);
-      }
+      if (existIndex === -1) return [...acc, cur];
+      acc[existIndex][1].push(...cur[1]);
       return acc;
     }, []);
 
-// console.log(mapMoviesByClients(DATASET));
-
+/** Rassemble les valeurs de mêmes clés */
 const sortAndShuffle = (mappedDatasets: MappedDatasetArray): MappedDataset =>
   mappedDatasets.reduce((acc: MappedDataset, cur: MappedDataset) => {
-    cur.forEach(row => {
-      const existIndex = acc.findIndex(r => r[0] === row[0]);
-      if (existIndex === -1) acc = [...acc, row];
-      else acc[existIndex][1].push(...row[1]);
+    cur.forEach(pair => {
+      const existIndex = acc.findIndex(r => r[0] === pair[0]);
+      if (existIndex === -1) acc = [...acc, pair];
+      else acc[existIndex][1].push(...pair[1]);
     });
     return acc;
   }, []);
 
-console.log(
-  sortAndShuffle(splitDataset(DATASET, 2).map(mapRentsAmountByClients)),
-);
+// -----
+// reducers
+// N.B: Les reducers sont notées 'async' afin de pouvoir être parallélisées à l'aide de 'Promise.all'
+// -----
+
+/** Applique une somme sur les valeurs de la Pair donnée */
+const reducerSum = async (pair: Pair): Pair => [
+  pair[0],
+  pair[1].reduce((acc, cur) => acc + cur, 0),
+];
+
+/** Ne garde que le film le plus loué parmis les valeurs  */
+const reducerMostRentedMovie = async (pair: Pair): Pair => [
+  pair[0],
+  pair[1]
+    .sort(
+      (a, b) =>
+        pair[1].filter(v => v === a).length -
+        pair[1].filter(v => v === b).length,
+    )
+    .pop(),
+];
+
+/** CAS 1: Montant des locations par client (mail) */
+const rentsAmountByClient = async (dataset: Location[]): MappedDataset => {
+  const dataChunks: Location[][] = splitDataset(dataset, 3);
+  const mappedDatasets: MappedDatasetArray = await Promise.all(
+    dataChunks.map(mapRentsAmountByClients),
+  );
+  const shuffledPairs: MappedDataset = sortAndShuffle(mappedDatasets);
+  const reducedPairs: MappedDataset = await Promise.all(
+    shuffledPairs.map(reducerSum),
+  );
+
+  console.log(reducedPairs);
+  return reducedPairs;
+};
+
+/** CAS 2: Montant des locations par rating */
+const rentsAmountByRating = async (dataset: Location[]): MappedDataset => {
+  const dataChunks: Location[][] = splitDataset(dataset, 3);
+  const mappedDatasets: MappedDatasetArray = await Promise.all(
+    dataChunks.map(mapRentsAmountByRating),
+  );
+  const shuffledPairs: MappedDataset = sortAndShuffle(mappedDatasets);
+  const reducedPairs: MappedDataset = await Promise.all(
+    shuffledPairs.map(reducerSum),
+  );
+
+  console.log(reducedPairs);
+  return reducedPairs;
+};
+
+/** CAS 3: Film le + loué par rating */
+const mostRentedMovieByRating = async (dataset: Location[]): MappedDataset => {
+  const dataChunks: Location[][] = splitDataset(dataset, 3);
+  const mappedDatasets: MappedDatasetArray = await Promise.all(
+    dataChunks.map(mapMostRentedByRating),
+  );
+  const shuffledPairs: MappedDataset = sortAndShuffle(mappedDatasets);
+  const reducedPairs: MappedDataset = await Promise.all(
+    shuffledPairs.map(reducerMostRentedMovie),
+  );
+
+  console.log(reducedPairs);
+  return reducedPairs;
+};
+
+// -----
+// main
+// -----
+
+rentsAmountByClient(DATASET);
+rentsAmountByRating(DATASET);
+mostRentedMovieByRating(DATASET);
