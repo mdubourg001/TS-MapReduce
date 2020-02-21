@@ -5,16 +5,6 @@ import * as fs from 'fs';
 // types
 // -----
 
-/** Lit un fichier CSV et retourne un tableau d'objets */
-const getCSVData = async (filepath: string) =>
-  new Promise(resolve => {
-    const data = [];
-    fs.createReadStream(filepath)
-      .pipe(csv({ separator: ';' }))
-      .on('data', row => data.push(row))
-      .on('end', () => resolve(data));
-  });
-
 /** Le type de données récupérées depuis le CSV */
 type Location = {
   email: string;
@@ -29,38 +19,25 @@ type MappedDataset = Pair[];
 
 type MappedDatasetArray = MappedDataset[];
 
-const DATASET: Location[] = [
-  { email: 'john.doe@email.com', rating: 'G', title: 'TITANIC', amount: 2.5 },
-  { email: 'john.doe@email.com', rating: 'R', title: 'ROCKY 1', amount: 3.5 },
-  { email: 'john.doe@email.com', rating: 'R', title: 'ROCKY 2', amount: 5.0 },
-  {
-    email: 'jane.doe@email.com',
-    rating: 'NC-17',
-    title: 'ROCKY 3',
-    amount: 1.33,
-  },
-  {
-    email: 'jane.doe@email.com',
-    rating: 'PG-13',
-    title: 'TITANIC',
-    amount: 2.7,
-  },
-  { email: 'jane.doe@email.com', rating: 'G', title: 'FREDDY', amount: 7.1 },
-  {
-    email: 'jane.doe@email.com',
-    rating: 'R',
-    title: 'HARRY POTTER 1',
-    amount: 3.5,
-  },
-  {
-    email: 'tito.doe@email.com',
-    rating: 'PG',
-    title: 'HARRY POTTER 2',
-    amount: 0.5,
-  },
-  { email: 'tito.doe@email.com', rating: 'PG-13', title: 'TITANIC', amount: 2 },
-  { email: 'tito.doe@email.com', rating: 'G', title: 'ROCKY 1', amount: 2.9 },
-];
+// -----
+// utils
+// -----
+
+/** fn utilitaire: console.log et retourne la valeur fournie */
+const tapLog = (x: any): any => {
+  console.log(x);
+  return x;
+};
+
+/** Lit un fichier CSV et retourne un tableau d'objets */
+const getCSVData = async (filepath: string) =>
+  new Promise(resolve => {
+    const data = [];
+    fs.createReadStream(filepath)
+      .pipe(csv({ separator: ';' }))
+      .on('data', row => data.push(row))
+      .on('end', () => resolve(data));
+  });
 
 /** Découpe un dataset en `nb` datasets plus petits */
 const splitDataset = (dataset: any[], nb: number) => {
@@ -84,15 +61,10 @@ const splitDataset = (dataset: any[], nb: number) => {
 // N.B: Les maps sont notées 'async' afin de pouvoir être parallélisées à l'aide de 'Promise.all'
 // -----
 
-const tapLog = x => {
-  console.log(x);
-  return x;
-};
-
 /** Retourne un tableau de 'Pair' <email, amount[]>   */
 const mapRentsAmountByClients = async (dataset: Location[]): MappedDataset =>
   dataset
-    .map((rent: Location) => tapLog([rent.email, [rent.amount]]))
+    .map((rent: Location) => [rent.email, [rent.amount]])
     .reduce((acc, cur) => {
       const existIndex = acc.findIndex(r => r[0] === cur[0]);
       if (existIndex === -1) return [...acc, cur];
