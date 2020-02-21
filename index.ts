@@ -137,3 +137,10 @@ const sortAndSuffle = (dataset: Location[]) =>
 const reducerSum = (mappedDatasets: MappedDataset) =>
   mappedDatasets[1].reduce((acc, cur) => acc + cur, 0);
 
+const reducerMostRentingFilm = (mappedDatasets: MappedDataset) => {
+  return mappedDatasets[1].sort((a, b) =>
+    mappedDatasets[1].filter(v => v === a).length
+    - mappedDatasets[1].filter(v => v === b).length
+  ).pop();
+};
+
