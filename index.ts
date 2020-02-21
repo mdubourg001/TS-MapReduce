@@ -29,16 +29,19 @@ const splitDataset = (dataset: any[], nb: number) => {
   return split;
 };
 
-// -----
-// example: average of nb of vowels by length of word
-// -----
-
 type Location = {
   email: string;
   rating: string;
   title: string;
   amount: number;
 };
+
+type MappedDataset = {
+  key: string;
+  values: any[];
+}[];
+
+type MappedDatasetArray = MappedDataset[];
 
 const DATASET: Location[] = [
   { email: 'john.doe@email.com', rating: 'G', title: 'TITANIC', amount: 2.5 },
@@ -73,31 +76,21 @@ const DATASET: Location[] = [
   { email: 'tito.doe@email.com', rating: 'G', title: 'ROCKY 1', amount: 2.9 },
 ];
 
-const mapRentsByClients = (dataset: Location[]) =>
+const mapRentsAmountByClients = (
+  dataset: Location[],
+): {
+  email: string;
+  rentsAmounts: number[];
+}[] =>
   dataset
-    .map((rent: Location) => [rent.email, rent.amount])
+    .map((rent: Location) => [rent.email, [rent.amount]])
     .reduce((acc, cur) => {
       const existIndex = acc.findIndex(r => r[0] === cur[0]);
-      return existIndex === -1 ? [...acc, ] 
+      if (existIndex === -1) return [...acc, cur];
+      acc[existIndex][1].push(...cur[1]);
+      return acc;
     }, []);
 
-console.log(mapRentsByClients(DATASET));
+//console.log(splitDataset(DATASET, 2).map(mapRentsAmountByClients));
 
-/* // map, regroup and sort
-const mapNbOfVowelsByLengthOfWord = (wordArray: string[]) =>
-  wordArray
-    .reduce((computed, word) => {
-      const existingIndex = computed.findIndex(c => c[0] === word.length);
-
-      return existingIndex === -1
-        ? [...computed, [word.length, countVowels(word)]]
-        : computed.map((c, i) =>
-            i === existingIndex ? [...c, countVowels(word)] : c,
-          );
-    }, [])
-    .sort(sortByFirstIndex);
-
-console.log(mapNbOfVowelsByLengthOfWord(DATASET));
-
-// reduce
-const reduceAvgNbOfVowelsByLengthOfWord = (mappedWords: number[][]) => {}; */
+const sortAndShuffle = (mappedDatasets: MappedDatasetArray) => {};
