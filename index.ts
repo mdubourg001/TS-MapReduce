@@ -1,9 +1,14 @@
-import * as csv from 'csv-parser'
-import * as fs from 'fs'
+import * as csv from 'csv-parser';
+import * as fs from 'fs';
 
 // -----
 // types
 // -----
+
+/** Découpe un dataset en 'nb' datasets plus petits */
+const splitDataset = (dataset: any[], nb: number) => {
+  const split = [];
+  const sliceSize: number = Math.floor(dataset.length / nb);
 
   for (let i = 0; i < nb; i++) {
     split.push(
@@ -17,18 +22,18 @@ import * as fs from 'fs'
   return split;
 };
 
-let data = [];
-const csvToArray = async () =>
-  await fs.createReadStream('sakila_rental.csv')
-    .pipe(csv({separator:';'}))
-    .on('data', (row) => {
+/** Lit un fichier CSV et retourne un tableau d'objets */
+const getCSVData = async (filepath: string) =>
+  await fs
+    .createReadStream(filepath)
+    .pipe(csv({ separator: ';' }))
+    .on('data', row => {
       data.push(row);
     })
     .on('end', () => {
       console.log('CSV file successfully processed');
-      console.log(data)
+      console.log(data);
     });
-csvToArray();
 
 /** Le type de données récupérées depuis le CSV */
 type Location = {
@@ -214,6 +219,10 @@ const mostRentedMovieByRating = async (dataset: Location[]): MappedDataset => {
 // main
 // -----
 
-rentsAmountByClient(DATASET);
-rentsAmountByRating(DATASET);
-mostRentedMovieByRating(DATASET);
+const main = async () => {
+  const DATASET = await getCSVData('sakila_rental.csv');
+
+  rentsAmountByClient(DATASET);
+  //rentsAmountByRating(DATASET); // <-- Décommenter pour éxécuter
+  //mostRentedMovieByRating(DATASET); // <-- Décommenter pour éxécuter
+};
