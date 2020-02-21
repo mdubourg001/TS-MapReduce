@@ -36,10 +36,7 @@ type Location = {
   amount: number;
 };
 
-type MappedDataset = {
-  key: string;
-  values: any[];
-}[];
+type MappedDataset = any[][];
 
 type MappedDatasetArray = MappedDataset[];
 
@@ -121,6 +118,18 @@ const mapMoviesByClients = (dataset: Location[]) =>
       return acc;
     }, []);
 
-console.log(mapMoviesByClients(DATASET));
+// console.log(mapMoviesByClients(DATASET));
 
-const sortAndShuffle = (mappedDatasets: MappedDatasetArray) => {};
+const sortAndShuffle = (mappedDatasets: MappedDatasetArray): MappedDataset =>
+  mappedDatasets.reduce((acc: MappedDataset, cur: MappedDataset) => {
+    cur.forEach(row => {
+      const existIndex = acc.findIndex(r => r[0] === row[0]);
+      if (existIndex === -1) acc = [...acc, row];
+      else acc[existIndex][1].push(...row[1]);
+    });
+    return acc;
+  }, []);
+
+console.log(
+  sortAndShuffle(splitDataset(DATASET, 2).map(mapRentsAmountByClients)),
+);
