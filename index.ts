@@ -93,4 +93,34 @@ const mapRentsAmountByClients = (
 
 //console.log(splitDataset(DATASET, 2).map(mapRentsAmountByClients));
 
+const mapRentsByRating = (dataset: Location[]) =>
+  dataset
+    .map((rent: Location) => [rent.rating, [rent.amount]])
+    .reduce((acc, cur) => {
+      const existIndex = acc.findIndex(a => a[0] === cur[0]);
+      if (existIndex >= 0) {
+        acc[existIndex][1].push(...cur[1]);
+      } else {
+        acc.push(cur);
+      }
+      return acc;
+    }, []);
+
+// console.log(mapRentsByRating(DATASET));
+
+const mapMoviesByClients = (dataset: Location[]) =>
+  dataset
+    .map((rent: Location) => [rent.rating, [rent.title]])
+    .reduce((acc, cur) => {
+      const existIndex = acc.findIndex(a => a[0] === cur[0]);
+      if (existIndex >= 0) {
+        acc[existIndex][1].push(...cur[1]);
+      } else {
+        acc.push(cur);
+      }
+      return acc;
+    }, []);
+
+console.log(mapMoviesByClients(DATASET));
+
 const sortAndShuffle = (mappedDatasets: MappedDatasetArray) => {};
