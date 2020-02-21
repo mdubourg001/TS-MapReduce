@@ -9,7 +9,8 @@
     "typescript": "^3.7.5"
   },
   "scripts": {
-    "start": "tsnd --respawn --clear index.ts"
+    "dev": "tsnd --respawn --clear index.ts",
+    "start": "tsnd --clear index.ts"
   },
   "dependencies": {
     "csv-parser": "^2.3.2"

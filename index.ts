@@ -127,9 +127,16 @@ const reducerMostRentedMovie = async (pair: Pair): Pair => [
     .pop(),
 ];
 
+// -----
+// use cases
+// -----
+
 /** CAS 1: Montant des locations par client (mail) */
-const rentsAmountByClient = async (dataset: Location[]): MappedDataset => {
-  const dataChunks: Location[][] = splitDataset(dataset, 3);
+const rentsAmountByClient = async (
+  dataset: Location[],
+  splitBy: number,
+): MappedDataset => {
+  const dataChunks: Location[][] = splitDataset(dataset, splitBy);
   const mappedDatasets: MappedDatasetArray = await Promise.all(
     dataChunks.map(mapRentsAmountByClients),
   );
@@ -138,13 +145,15 @@ const rentsAmountByClient = async (dataset: Location[]): MappedDataset => {
     shuffledPairs.map(reducerSum),
   );
 
-  console.log(reducedPairs);
   return reducedPairs;
 };
 
 /** CAS 2: Montant des locations par rating */
-const rentsAmountByRating = async (dataset: Location[]): MappedDataset => {
-  const dataChunks: Location[][] = splitDataset(dataset, 3);
+const rentsAmountByRating = async (
+  dataset: Location[],
+  splitBy: number,
+): MappedDataset => {
+  const dataChunks: Location[][] = splitDataset(dataset, splitBy);
   const mappedDatasets: MappedDatasetArray = await Promise.all(
     dataChunks.map(mapRentsAmountByRating),
   );
@@ -153,13 +162,15 @@ const rentsAmountByRating = async (dataset: Location[]): MappedDataset => {
     shuffledPairs.map(reducerSum),
   );
 
-  console.log(reducedPairs);
   return reducedPairs;
 };
 
 /** CAS 3: Film le + loué par rating */
-const mostRentedMovieByRating = async (dataset: Location[]): MappedDataset => {
-  const dataChunks: Location[][] = splitDataset(dataset, 3);
+const mostRentedMovieByRating = async (
+  dataset: Location[],
+  splitBy: number,
+): MappedDataset => {
+  const dataChunks: Location[][] = splitDataset(dataset, splitBy);
   const mappedDatasets: MappedDatasetArray = await Promise.all(
     dataChunks.map(mapMostRentedByRating),
   );
@@ -168,7 +179,6 @@ const mostRentedMovieByRating = async (dataset: Location[]): MappedDataset => {
     shuffledPairs.map(reducerMostRentedMovie),
   );
 
-  console.log(reducedPairs);
   return reducedPairs;
 };
 
@@ -176,12 +186,23 @@ const mostRentedMovieByRating = async (dataset: Location[]): MappedDataset => {
 // main
 // -----
 
+const timeExecution = async (fn: Function) => {
+  const start = new Date();
+  await fn();
+  console.log(`=> ${new Date() - start}ms`);
+};
+
 const main = async () => {
   const DATASET = await getCSVData('sakila_rental.csv');
 
-  rentsAmountByClient(DATASET);
-  //rentsAmountByRating(DATASET); // <-- Décommenter pour éxécuter
-  //mostRentedMovieByRating(DATASET); // <-- Décommenter pour éxécuter
+  console.log('Running rentsAmountByClient (CAS 1)...');
+  await timeExecution(() => rentsAmountByClient(DATASET, 10));
+
+  console.log('Running rentsAmountByRating (CAS 2)...');
+  await timeExecution(() => rentsAmountByRating(DATASET, 10));
+
+  console.log('Running mostRentedMovieByRating (CAS 3)...');
+  await timeExecution(() => mostRentedMovieByRating(DATASET, 10));
 };
 
 main();
