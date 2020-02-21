@@ -1,4 +1,4 @@
-**This is a TS implementation on the MapReduce algorithm.**
+**This is a TS implementation of the MapReduce algorithm.**
 
 #### Setup project
 
@@ -13,3 +13,7 @@ Running does not logs results at the moment, it only measure and logs the execut
 ```shell
 yarn start
 ```
+
+---
+
+![MapReduce schema](https://www.researchgate.net/publication/276133737/figure/fig2/AS:614345205616656@1523482719495/Typical-MapReduce-algorithm-workflow.png)
