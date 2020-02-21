@@ -5,35 +5,15 @@ import * as fs from 'fs';
 // types
 // -----
 
-/** Découpe un dataset en 'nb' datasets plus petits */
-const splitDataset = (dataset: any[], nb: number) => {
-  const split = [];
-  const sliceSize: number = Math.floor(dataset.length / nb);
-
-  for (let i = 0; i < nb; i++) {
-    split.push(
-      dataset.slice(
-        i * sliceSize,
-        i === nb - 1 ? undefined : (i + 1) * sliceSize,
-      ),
-    );
-  }
-
-  return split;
-};
-
 /** Lit un fichier CSV et retourne un tableau d'objets */
 const getCSVData = async (filepath: string) =>
-  await fs
-    .createReadStream(filepath)
-    .pipe(csv({ separator: ';' }))
-    .on('data', row => {
-      data.push(row);
-    })
-    .on('end', () => {
-      console.log('CSV file successfully processed');
-      console.log(data);
-    });
+  new Promise(resolve => {
+    const data = [];
+    fs.createReadStream(filepath)
+      .pipe(csv({ separator: ';' }))
+      .on('data', row => data.push(row))
+      .on('end', () => resolve(data));
+  });
 
 /** Le type de données récupérées depuis le CSV */
 type Location = {
@@ -104,10 +84,15 @@ const splitDataset = (dataset: any[], nb: number) => {
 // N.B: Les maps sont notées 'async' afin de pouvoir être parallélisées à l'aide de 'Promise.all'
 // -----
 
+const tapLog = x => {
+  console.log(x);
+  return x;
+};
+
 /** Retourne un tableau de 'Pair' <email, amount[]>   */
 const mapRentsAmountByClients = async (dataset: Location[]): MappedDataset =>
   dataset
-    .map((rent: Location) => [rent.email, [rent.amount]])
+    .map((rent: Location) => tapLog([rent.email, [rent.amount]]))
     .reduce((acc, cur) => {
       const existIndex = acc.findIndex(r => r[0] === cur[0]);
       if (existIndex === -1) return [...acc, cur];
@@ -155,7 +140,7 @@ const sortAndShuffle = (mappedDatasets: MappedDatasetArray): MappedDataset =>
 /** Applique une somme sur les valeurs de la Pair donnée */
 const reducerSum = async (pair: Pair): Pair => [
   pair[0],
-  pair[1].reduce((acc, cur) => acc + cur, 0),
+  pair[1].reduce((acc, cur) => acc + +cur, 0),
 ];
 
 /** Ne garde que le film le plus loué parmis les valeurs  */
@@ -226,3 +211,5 @@ const main = async () => {
   //rentsAmountByRating(DATASET); // <-- Décommenter pour éxécuter
   //mostRentedMovieByRating(DATASET); // <-- Décommenter pour éxécuter
 };
+
+main();
