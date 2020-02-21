@@ -1,3 +1,6 @@
+import * as csv from 'csv-parser'
+import * as fs from 'fs'
+
 // -----
 // utils
 // -----
@@ -29,6 +32,18 @@ const splitDataset = (dataset: any[], nb: number) => {
   return split;
 };
 
+let data = [];
+const csvToArray = async () =>
+  await fs.createReadStream('sakila_rental.csv')
+    .pipe(csv({separator:';'}))
+    .on('data', (row) => {
+      data.push(row);
+    })
+    .on('end', () => {
+      console.log('CSV file successfully processed');
+      console.log(data)
+    });
+csvToArray();
 type Location = {
   email: string;
   rating: string;

@@ -11,5 +11,7 @@
   "scripts": {
     "start": "tsnd --respawn --clear index.ts"
   },
-  "dependencies": {}
+  "dependencies": {
+    "csv-parser": "^2.3.2"
+  }
 }
