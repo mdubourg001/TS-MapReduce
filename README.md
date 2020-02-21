@@ -1,4 +1,4 @@
-**This is a TS implementation of the MapReduce algorithm.**
+**This is a TS implementation of the MapReduce algorithm. (Context: EPSI I2 BIG DATA)**
 
 #### Setup project
 
